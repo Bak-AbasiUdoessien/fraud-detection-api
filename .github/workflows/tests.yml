@@ -1,0 +1,31 @@
+# On every push: run the tests, then build the Docker image and check the running container answers.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -v
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t fraud-api .
+      - name: Start the container and call the API
+        run: |
+          docker run -d -p 8000:8000 --name api fraud-api
+          for i in $(seq 1 30); do curl -sf localhost:8000/health && break; sleep 1; done   # wait for start-up
+          curl -sf -X POST localhost:8000/predict -H "content-type: application/json" \
+            -d '{"step":2,"type":"TRANSFER","amount":181000,"oldbalanceOrg":181000,"newbalanceOrig":0,"oldbalanceDest":0,"newbalanceDest":0}'
