@@ -1,0 +1,5 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29     # the web server that runs the FastAPI app
+pandas>=2.2
+numpy>=1.26
+scikit-learn>=1.4
